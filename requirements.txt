@@ -5,3 +5,4 @@ bitsandbytes
 sentencepiece
 termcolor
 numpy
+pip install protobuf
