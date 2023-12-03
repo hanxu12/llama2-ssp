@@ -62,7 +62,6 @@ def _ssp_iteration(target_model, draft_model, input_ids, K=4, display=False):
             target_distribution[:1, t-1, inputs_plus_k[0, T+t-1]]
             / draft_distribution[:1, t-1, inputs_plus_k[0, T+t-1]]
         )
-        # print(f"Sampled ratios: {sampled_ratios}")
         sampled_ratios = torch.min(sampled_ratios,
                                    torch.ones_like(sampled_ratios))
         rs = torch.rand_like(sampled_ratios)
@@ -71,7 +70,6 @@ def _ssp_iteration(target_model, draft_model, input_ids, K=4, display=False):
             input_ids = torch.cat(
                 [input_ids, inputs_plus_k[:, T + t-1].unsqueeze(1)],
                 dim=1)
-            stream_token_if_required(input_ids, stream=display)
 
         else:
             all_accepted = False
@@ -81,7 +79,6 @@ def _ssp_iteration(target_model, draft_model, input_ids, K=4, display=False):
             input_ids = torch.cat(
                 [input_ids, next_token_id.unsqueeze(1)],
                 dim=1)
-            stream_token_if_required(input_ids, stream=display)
             break
 
     # if all tokens were accepted, sample a last one
@@ -90,7 +87,6 @@ def _ssp_iteration(target_model, draft_model, input_ids, K=4, display=False):
         input_ids = torch.cat(
             [input_ids, next_token_id.unsqueeze(1)],
             dim=1)
-        stream_token_if_required(input_ids, stream=display)
     debug(
         f"Accepted continuations: {tokenizer.decode(input_ids[0,T:], skip_special_tokens=True)}")
     return input_ids

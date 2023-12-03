@@ -183,18 +183,20 @@ def show_comparative_speeds(text, model, draft_model):
     input_ids = tokenizer(text, return_tensors="pt").input_ids
     print(colored("=> Regular sampling with target model",
                   attrs=['bold']))
-    sys.stdout.write(text)
     start_time = time.time()
-    sample_model(model, input_ids, MAX_NEW_TOKENS, display=True)
+    input_ids = sample_model(model, input_ids, MAX_NEW_TOKENS, display=False)
+    output = tokenizer.decode(input_ids[0], skip_special_tokens=True)
+    print(f"Regular Output: {output}")
     print("\nTime: "
           + colored(f"{time.time() - start_time:.2f}s", 'red', attrs=['bold']))
     print(colored(
         "=> Speculative sampling with target model helped by draft model",
         attrs=['bold']))
-    sys.stdout.write(text)
     start_time = time.time()
-    ssp(model, draft_model, MAX_NEW_TOKENS,
-        input_ids, K=4, display=True)
+    input_ids = ssp(model, draft_model, MAX_NEW_TOKENS,
+        input_ids, K=4, display=False)
+    output = tokenizer.decode(input_ids[0], skip_special_tokens=True)
+    print(f"SSP Output: {output}")
     print("\nTime: "
           + colored(f"{time.time() - start_time:.2f}s", 'green', attrs=['bold']))
 
@@ -215,22 +217,7 @@ def create_argument_parser():
         'compare', help='Compare the speed of a given model (target model) alone, and with speculative sampling with another model (draft model)')
     compare_parser.add_argument('model', help='Name of target model')
     compare_parser.add_argument('draft', help='Draft model')
-
-    latency_parser = subparsers.add_parser(
-        'latency', help='Measure model latency in ms per token')
-    latency_parser.add_argument('model', help='Name of model')
-    latency_parser.add_argument(
-        '--draft', help='Draft model; if specified, will measure the latency of speculative sampling with the draft model rather than the regular latency')
-
-    eval_parser = subparsers.add_parser(
-        'eval', help='evaluate a model')
-    eval_parser.add_argument('model', help='model to use')
-    eval_parser.add_argument(
-        '--draft', help='Draft model; if specified, will evaluate the model with speculative sampling with the draft model rather than the regular model')
-    eval_parser.add_argument('--seed', type=int, default=1338,
-                             help='Seed for randomly creating the eval prompts')
-    eval_parser.add_argument('--nb-prompts', type=int, default=1000,
-                             help='Number of eval prompts to create')
+    compare_parser.add_argument('text', help='Text to process')
     return parser
 
 
@@ -241,50 +228,13 @@ if __name__ == "__main__":
         # set log level to debug
         logging.basicConfig(level=logging.DEBUG)
 
-    if args.subcommand == 'compare':
-        model = create_model(**models_params[args.model])
-        draft_model = create_model(**models_params[args.draft])
-        print("Warming up")
-        ssp(model, draft_model, MAX_NEW_TOKENS,
-            tokenizer(texts[0], return_tensors="pt").input_ids, K=4)
-        print(
-            f"Comparing {args.model} model regular sampling and {args.model} SSp with {args.draft} draft model\n====\n")
-        # Read from stdin until EOF
-        while True:
-            try:
-                sys.stdout.write("> ")
-                sys.stdout.flush()
-                text = input()
-            except EOFError:
-                break
-            show_comparative_speeds(text, model, draft_model)
-
-    elif (args.subcommand == 'latency' and args.draft):
-        print(f"Testing {args.model} with draft {args.draft}")
-        print('-'*20)
-        gen_ids, ms_per_token = time_ssp(args.model, args.draft)
-        print_results(ms_per_token, gen_ids, args.model)
-
-    elif (args.subcommand == 'latency'):
-        print(f"Testing {args.model}")
-        print('-'*20)
-        model = create_model(**models_params[args.model])
-        gen_ids, ms_per_token = time_model(model)
-        print_results(ms_per_token, gen_ids, args.model)
-
-    elif (args.subcommand == 'eval'):
-        print(f"Eval of {args.model} on multiplication task (seed {args.seed})"
-              + (f" with draft {args.draft}" if args.draft else ""))
-        print('-'*20)
-        model = create_model(**models_params[args.model])
-        if args.draft:
-            draft_model = create_model(**models_params[args.draft])
-        else:
-            draft_model = None
-        results = evals.measure_model_score(
-            model, tokenizer, args.nb_prompts, args.seed, draft_model)
-        evals.print_results(results, args.model, args.draft)
-
-    else:
-        # show usage
-        parser.print_help()
+    model = create_model(**models_params[args.model])
+    draft_model = create_model(**models_params[args.draft])
+    print("Warming up")
+    ssp(model, draft_model, MAX_NEW_TOKENS,
+        tokenizer(texts[0], return_tensors="pt").input_ids, K=4)
+    print(
+        f"Comparing {args.model} model regular sampling and {args.model} SSp with {args.draft} draft model\n====\n")
+    # Read from stdin until EOF
+    print(f"Parsed Text {args.text}")
+    show_comparative_speeds(args.text, model, draft_model)

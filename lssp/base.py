@@ -12,7 +12,7 @@ def create_model(model_name, max_memory, load_in_8bit=True):
     return LlamaForCausalLM.from_pretrained(
         model_name,
         device_map='balanced',
-        load_in_8bit=load_in_8bit,
+        torch_dtype=torch.float16,
         max_memory=max_memory
     )
 
