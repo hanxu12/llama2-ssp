@@ -4,7 +4,7 @@ import sys
 import torch
 from transformers import LlamaForCausalLM, LlamaTokenizer
 
-llama7b_name = 'decapoda-research/llama-7b-hf'
+llama7b_name = 'meta-llama/Llama-2-7b-hf'
 tokenizer = LlamaTokenizer.from_pretrained(llama7b_name)
 
 
