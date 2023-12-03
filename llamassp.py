@@ -13,10 +13,10 @@ from termcolor import colored
 torch.manual_seed(1339)
 
 MAX_NEW_TOKENS = 64
-llama7b_name = 'decapoda-research/llama-7b-hf'
-llama13b_name = 'decapoda-research/llama-13b-hf'
-llama30b_name = 'decapoda-research/llama-30b-hf'
-llama65b_name = 'decapoda-research/llama-65b-hf'
+llama7b_name = 'meta-llama/Llama-2-7b-hf'
+llama13b_name = 'meta-llama/Llama-2-13b-hf'
+llama30b_name = 'meta-llama/Llama-2-34b-hf'
+llama65b_name = 'meta-llama/Llama-2-70b-hf'
 batch_size = 1
 
 texts = [
